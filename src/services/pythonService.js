@@ -6,6 +6,7 @@ const analyzeAudio = async (filePath) => {
 
   return {
     pitch: "C4",
+    midiNote: 60,
     scale: "C Major",
     confidence: 0.92,
     tempo: 120,

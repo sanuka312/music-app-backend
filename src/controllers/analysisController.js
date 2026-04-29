@@ -1,4 +1,4 @@
-const { analyzeRecording } = require("../services/analysisService");
+const { analyzeRecording, compareRecordings } = require("../services/analysisService");
 const Recording = require("../models/Recording");
 const AnalysisResult = require("../models/AnalysisResult");
 
@@ -53,6 +53,50 @@ const analyzeUpload = async (req, res, next) => {
   }
 };
 
+const compareUploads = async (req, res, next) => {
+  try {
+    const userAudio = req.files?.userAudio?.[0];
+    const originalAudio = req.files?.originalAudio?.[0];
+
+    if (!userAudio || !originalAudio) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Two audio files are required: userAudio and originalAudio (multipart/form-data).",
+      });
+    }
+
+    const comparison = await compareRecordings(userAudio.path, originalAudio.path);
+
+    return res.status(200).json({
+      success: true,
+      message: "Audio comparison completed successfully",
+      data: {
+        files: {
+          userAudio: {
+            originalName: userAudio.originalname,
+            fileName: userAudio.filename,
+            path: userAudio.path,
+            size: userAudio.size,
+            mimeType: userAudio.mimetype,
+          },
+          originalAudio: {
+            originalName: originalAudio.originalname,
+            fileName: originalAudio.filename,
+            path: originalAudio.path,
+            size: originalAudio.size,
+            mimeType: originalAudio.mimetype,
+          },
+        },
+        ...comparison,
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 module.exports = {
   analyzeUpload,
+  compareUploads,
 };
