@@ -1,8 +1,14 @@
 const express = require("express");
-const { analyzeUpload ,compareUploads} = require("../controllers/analysisController");
+const {
+  analyzeUpload,
+  compareUploads,
+  getAnalysisHistory,
+} = require("../controllers/analysisController");
 const upload = require("../middlewares/uploadMiddleware");
 
 const router = express.Router();
+
+router.get("/history", getAnalysisHistory);
 
 router.post("/", upload.single("audio"), analyzeUpload);
 

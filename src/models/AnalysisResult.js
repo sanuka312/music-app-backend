@@ -2,16 +2,45 @@ const mongoose = require("mongoose");
 
 const analysisResultSchema = new mongoose.Schema(
   {
-    recording: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Recording",
-      required: true,
+    userAnalysis: {
+      pitch: String,
+      note: String,
+      midiNote: Number,
+      scale: String,
+      confidence: Number,
+      tempo: Number,
+      notes: [String],
+      pitchTimeline: [
+        {
+          time: Number,
+          pitch: Number,
+        },
+      ],
     },
-    pitch: String,
-    scale: String,
-    confidence: Number,
-    tempo: Number,
-    notes: [String],
+
+    originalAnalysis: {
+      pitch: String,
+      note: String,
+      midiNote: Number,
+      scale: String,
+      confidence: Number,
+      tempo: Number,
+      notes: [String],
+      pitchTimeline: [
+        {
+          time: Number,
+          pitch: Number,
+        },
+      ],
+    },
+
+    pitchSemitoneDifference: Number,
+    keySemitoneDifference: Number,
+    semitoneDifference: Number,
+    recommendation: String,
+
+    userFileName: String,
+    originalFileName: String,
   },
   { timestamps: true }
 );

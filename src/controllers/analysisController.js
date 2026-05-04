@@ -23,12 +23,16 @@ const analyzeUpload = async (req, res, next) => {
     const analysis = await analyzeRecording(req.file.path);
 
     const analysisResult = await AnalysisResult.create({
-      recording: recording._id,
-      pitch: analysis.pitch,
-      scale: analysis.scale,
-      confidence: analysis.confidence,
-      tempo: analysis.tempo,
-      notes: analysis.notes,
+      userAnalysis: {
+        pitch: analysis.pitch,
+        note: analysis.note,
+        midiNote: analysis.midiNote,
+        scale: analysis.scale,
+        confidence: analysis.confidence,
+        tempo: analysis.tempo,
+        notes: analysis.notes,
+      },
+      userFileName: req.file.originalname,
     });
 
     recording.status = "completed";
@@ -66,30 +70,51 @@ const compareUploads = async (req, res, next) => {
       });
     }
 
-    const comparison = await compareRecordings(userAudio.path, originalAudio.path);
+    const comparison = await compareRecordings(
+      userAudio.path,
+      originalAudio.path
+    );
+
+    const analysisResult = await AnalysisResult.create({
+      userAnalysis: comparison.userAnalysis,
+      originalAnalysis: comparison.originalAnalysis,
+
+      pitchSemitoneDifference: comparison.pitchSemitoneDifference,
+      keySemitoneDifference: comparison.keySemitoneDifference,
+      semitoneDifference: comparison.semitoneDifference,
+
+      recommendation: comparison.recommendation,
+
+      userFileName: userAudio.originalname,
+      originalFileName: originalAudio.originalname,
+    });
 
     return res.status(200).json({
       success: true,
       message: "Audio comparison completed successfully",
-      data: {
-        files: {
-          userAudio: {
-            originalName: userAudio.originalname,
-            fileName: userAudio.filename,
-            path: userAudio.path,
-            size: userAudio.size,
-            mimeType: userAudio.mimetype,
-          },
-          originalAudio: {
-            originalName: originalAudio.originalname,
-            fileName: originalAudio.filename,
-            path: originalAudio.path,
-            size: originalAudio.size,
-            mimeType: originalAudio.mimetype,
-          },
-        },
-        ...comparison,
-      },
+      data: analysisResult,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const getAnalysisHistory = async (req, res, next) => {
+  try {
+    const limit = Math.min(
+      Math.max(parseInt(req.query.limit, 10) || 50, 1),
+      200
+    );
+
+    const history = await AnalysisResult.find()
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .lean();
+
+    return res.status(200).json({
+      success: true,
+      message: "Analysis history retrieved",
+      data: history,
     });
   } catch (error) {
     return next(error);
@@ -99,4 +124,5 @@ const compareUploads = async (req, res, next) => {
 module.exports = {
   analyzeUpload,
   compareUploads,
+  getAnalysisHistory,
 };
