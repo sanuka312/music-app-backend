@@ -1,5 +1,5 @@
 const { analyzeAudio } = require("./pythonService");
-const path = require("path");
+
 
 const NOTE_INDEX = {
   C: 0,
@@ -28,21 +28,20 @@ const calculateKeyDifference = (userScale, originalScale) => {
     return null;
   }
 
-  return NOTE_INDEX[originalKey] - NOTE_INDEX[userKey];
-};
+  let keyDifference = NOTE_INDEX[originalKey] - NOTE_INDEX[userKey];
+  if (keyDifference > 6) {
+    keyDifference -= 12;
+  } else if (keyDifference < -6) {
+    keyDifference += 12;
+  }
 
-const analyzeRecording = async (filePath) => {
-  const absolutePath = path.resolve(filePath);
-  return await analyzeAudio(absolutePath);
+  return keyDifference;
 };
 
 const compareRecordings = async (userFilePath, originalFilePath) => {
-
-  const userAbsolutePath = path.resolve(userFilePath);
-  const originalAbsolutePath = path.resolve(originalFilePath);
-
-  const userAnalysis = await analyzeAudio(userAbsolutePath);
-  const originalAnalysis = await analyzeAudio(originalAbsolutePath);
+  
+  const userAnalysis = await analyzeAudio(userFilePath);
+  const originalAnalysis = await analyzeAudio(originalFilePath);
 
   const pitchSemitoneDifference =
     originalAnalysis.midiNote - userAnalysis.midiNote;
@@ -80,6 +79,5 @@ const compareRecordings = async (userFilePath, originalFilePath) => {
 };
 
 module.exports = {
-  analyzeRecording,
   compareRecordings,
 };
