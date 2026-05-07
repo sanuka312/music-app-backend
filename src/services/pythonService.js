@@ -26,8 +26,6 @@ const warmUpPythonService = async () => {
 };
 
 const analyzeAudio = async (filePath) => {
-  await warmUpPythonService();
-
   const formData = new FormData();
 
   formData.append("file", fs.createReadStream(filePath));
@@ -44,6 +42,12 @@ const analyzeAudio = async (filePath) => {
   return response.data;
 };
 
+const compareAudio = async (userFilePath, originalFilePath) => {
+  await warmUpPythonService();
+  return Promise.all([analyzeAudio(userFilePath), analyzeAudio(originalFilePath)]);
+};
+
 module.exports = {
   analyzeAudio,
+  compareAudio,
 };

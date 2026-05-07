@@ -1,4 +1,4 @@
-const { analyzeAudio } = require("./pythonService");
+const { analyzeAudio, compareAudio } = require("./pythonService");
 
 
 const NOTE_INDEX = {
@@ -39,9 +39,7 @@ const calculateKeyDifference = (userScale, originalScale) => {
 };
 
 const compareRecordings = async (userFilePath, originalFilePath) => {
-  
-  const userAnalysis = await analyzeAudio(userFilePath);
-  const originalAnalysis = await analyzeAudio(originalFilePath);
+  const [userAnalysis, originalAnalysis] = await compareAudio(userFilePath, originalFilePath);
 
   const pitchSemitoneDifference =
     originalAnalysis.midiNote - userAnalysis.midiNote;
