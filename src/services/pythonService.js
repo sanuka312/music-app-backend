@@ -4,7 +4,7 @@ const FormData = require("form-data");
 const env = require("../config/env");
 const AppError = require("../utils/AppError");
 
-const ANALYZE_TIMEOUT_MS = 180000;
+const ANALYZE_TIMEOUT_MS = 240000;
 const WARMUP_TIMEOUT_MS = 10000;
 const PYTHON_UNAVAILABLE_STATUS = 502;
 
@@ -28,39 +28,36 @@ const getPythonBaseUrl = () => {
   return baseUrl;
 };
 
-const toPythonEndpoint = (path) => {
-  return new URL(path, getPythonBaseUrl()).toString();
-};
+const getPythonApi = () =>
+  axios.create({
+    baseURL: getPythonBaseUrl(),
+    timeout: ANALYZE_TIMEOUT_MS,
+  });
 
 const warmUpPythonService = async () => {
-  try {
-    await axios.get(toPythonEndpoint("/health"), {
-      timeout: WARMUP_TIMEOUT_MS,
-    });
-    return;
-  } catch (healthError) {
-    // Some deployments may not expose /health; fall back to root ping.
-  }
+  const pythonApi = getPythonApi();
 
   try {
-    await axios.get(toPythonEndpoint("/"), {
-      timeout: WARMUP_TIMEOUT_MS,
+    await pythonApi.get("/health", {
+      timeout: 20000,
     });
-  } catch (rootError) {
-    // Ignore warm-up failures and let /analyze surface the real error.
+  } catch (err) {
+    // Don't hard-fail warmup; analysis call may still work.
+    console.warn("Python warm-up ping failed:", err.message);
   }
 };
 
 const analyzeAudio = async (filePath) => {
+  const pythonApi = getPythonApi();
   const formData = new FormData();
 
   formData.append("file", fs.createReadStream(filePath));
 
   try {
-    const response = await axios.post(toPythonEndpoint("/analyze"), formData, {
-      headers: formData.getHeaders(),
+    const response = await pythonApi.post("/analyze", formData, {
+      headers: { ...formData.getHeaders(), "Content-Type": "multipart/form-data" },
       timeout: ANALYZE_TIMEOUT_MS,
-    });
+    });    
 
     return response.data;
   } catch (error) {
